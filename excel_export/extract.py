@@ -1,28 +1,21 @@
-#!/usr/bin/env python
 # encoding: utf-8
 import xlrd
-import os
+import excel_export
+from excel_export.export import export_to_sqlite3
 
-def export(**kwargs):
-	excel_file = kwargs.get('excel_file')
-	output_dir = kwargs.get('output_dir')
-	output_type = kwargs.get('output_type')
-	
-	workbook = xlrd.open_workbook(excel_file)
-	
+def extract_tables_from_excels(excel_files):
 	tables_in_all_sheet = {}
 	
-	for sheet in workbook.sheets():
-		print "\nWorkSheet[", sheet.name.encode('utf8'), "] 탐색..."
+	for excel_file in excel_files:
+		workbook = xlrd.open_workbook(excel_file)
 		
-		if sheet.ncols > 0:
-			tables_in_sheet = _get_tables_in_sheet(sheet)
-			tables_in_all_sheet.update(tables_in_sheet)
-	
-	print excel_file, output_dir
-	
-	print tables_in_all_sheet
-	pass
+		for sheet in workbook.sheets():
+			if sheet.ncols > 0:
+				tables_in_sheet = _get_tables_in_sheet(sheet)
+				tables_in_all_sheet.update(tables_in_sheet)
+				print "\nsheet(", sheet.name.encode('utf8'), ") :", len(tables_in_sheet), "개 추출"
+		
+	return tables_in_all_sheet;
 
 def _get_tables_in_sheet(sheet):
 	'''
@@ -120,7 +113,7 @@ def _check_merged_cell(merged_single_col_ranges, row, col):
 	"""
 	merged_single_col_ranges 중 cell(row,col)을 포함하는 범위가 있으면 리턴
 	"""
-	for range in merged_single_col_ranges:
-		if col == range[2] and row >= range[0] and row < range[1]:
-			return range
+	for rng in merged_single_col_ranges:
+		if col == rng[2] and row >= rng[0] and row < rng[1]:
+			return rng
 	
