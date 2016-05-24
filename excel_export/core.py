@@ -10,13 +10,18 @@ def export(**kwargs):
 	
 	workbook = xlrd.open_workbook(excel_file)
 	
+	tables_in_all_sheet = {}
+	
 	for sheet in workbook.sheets():
 		print "\nWorkSheet[", sheet.name.encode('utf8'), "] 탐색..."
 		
 		if sheet.ncols > 0:
-			data = _get_tables_in_sheet(sheet)
+			tables_in_sheet = _get_tables_in_sheet(sheet)
+			tables_in_all_sheet.update(tables_in_sheet)
 	
 	print excel_file, output_dir
+	
+	print tables_in_all_sheet
 	pass
 
 def _get_tables_in_sheet(sheet):
@@ -24,13 +29,15 @@ def _get_tables_in_sheet(sheet):
 	sheet 내 정보를 추출한다.
 	'''
 	merged_heads = []
+	merged_single_col_ranges = [] #1열이 수직으로 병함된 셀정보. 동일값 처리
 	
 	for crange in sheet.merged_cells:
 		if crange[0] == 0 and crange[1] == 1:
 			merged_heads.append((crange[2], crange[3]))
+		if crange[2] + 1 == crange[3]:
+			merged_single_col_ranges.append(crange)
 	
 	merged_heads.sort(reverse=True)
-	print merged_heads
 	
 	s_col_idx = e_col_idx = 0
 	merged_range = None
@@ -57,12 +64,20 @@ def _get_tables_in_sheet(sheet):
 		if s_col_idx >= sheet.ncols:
 			break
 	
+	tables = {}
 	#return header_infos
 	for header_info in header_infos:
-		table = _get_table(sheet, header_info)
+		table = _get_table(sheet, header_info, merged_single_col_ranges)
+		tables[header_info[0]] = table
+		
+	return tables
 	
-def _get_table(sheet, header_info):
+def _get_table(sheet, header_info, merged_single_col_ranges):
+	"""
+	header_info를 바탕으로 sheet로부터 테이블 데이터(헤더정보포함) 추출한다
+	"""
 	cols = []
+	data_row_pos = 0
 	for col_idx in xrange(header_info[1], header_info[2] + 1):
 		col1 = sheet.cell(1, col_idx).value
 		col2 = sheet.cell(2, col_idx).value
@@ -71,15 +86,41 @@ def _get_table(sheet, header_info):
 		
 		if ':' in col1:
 			arr_col = col1.split(':')
+			if data_row_pos == 0: data_row_pos = 2
 		elif ':' in col2:
 			arr_col = col2.split(':')
+			if data_row_pos == 0: data_row_pos = 3
 		
 		if arr_col:
 			cols.append((arr_col[0].strip(), arr_col[1].strip(), col_idx))
 	
-	print "========="
-	print header_info
-	print cols
+	data_rows = []
 	
+	while data_row_pos < sheet.nrows:
+		row = []
+		for col in cols:
+			rng = _check_merged_cell(merged_single_col_ranges, data_row_pos, col[2])
+			
+			if rng:
+				val = sheet.cell(rng[0], rng[2]).value
+			else:
+				val = sheet.cell(data_row_pos, col[2]).value
+			
+			row.append(val)
+		
+		if not any(row):
+			break
+		
+		data_rows.append(tuple(row))
+		data_row_pos += 1
 	
-	return
+	return (cols, data_rows)
+
+def _check_merged_cell(merged_single_col_ranges, row, col):
+	"""
+	merged_single_col_ranges 중 cell(row,col)을 포함하는 범위가 있으면 리턴
+	"""
+	for range in merged_single_col_ranges:
+		if col == range[2] and row >= range[0] and row < range[1]:
+			return range
+	

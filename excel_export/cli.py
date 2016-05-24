@@ -3,7 +3,7 @@
 import sys
 import argparse
 import os
-from excel_export import core
+import core
 
 def main(argv):
 	parser = argparse.ArgumentParser('excel-export', 'Extract Sql (mysql or sqlite) from specifically formatted excel file')
