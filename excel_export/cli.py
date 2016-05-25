@@ -19,7 +19,11 @@ def main(argv):
 	args = parser.parse_args()
 	
 	tables = extract.extract_tables_from_excels(excel_files=args.input_files)
-	export.export_to_sqlite3(tables, args.output_dir, "template")
+	output_files = export.export_to_sqlite3(tables, args.output_dir, "data")
+	
+	print "=============Export files================"
+	for file_path in output_files:
+		print file_path
 	
 	pass
 

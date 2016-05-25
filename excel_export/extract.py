@@ -1,7 +1,5 @@
 # encoding: utf-8
 import xlrd
-import excel_export
-from excel_export.export import export_to_sqlite3
 
 def extract_tables_from_excels(excel_files):
 	tables_in_all_sheet = {}
@@ -13,7 +11,7 @@ def extract_tables_from_excels(excel_files):
 			if sheet.ncols > 0:
 				tables_in_sheet = _get_tables_in_sheet(sheet)
 				tables_in_all_sheet.update(tables_in_sheet)
-				print "\nsheet(", sheet.name.encode('utf8'), ") :", len(tables_in_sheet), "개 추출"
+				print len(tables_in_sheet), "tables extracted in sheet(", sheet.name.encode('utf8'), ")"
 		
 	return tables_in_all_sheet;
 

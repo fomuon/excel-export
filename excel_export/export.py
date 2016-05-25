@@ -10,7 +10,6 @@ type_map = {'T': 'TEXT', 'I': 'INTEGER', 'N': 'NUMERIC'}
 def export_to_sqlite3(tables, output_dir, file_name):
 	sqls = _convert_to_sqls(tables)
 	
-	print sqls
 	sql_file = os.path.join(output_dir, file_name + '.sql')
 	db_file = os.path.join(output_dir, file_name + '.sqlite3')
 	
@@ -29,7 +28,9 @@ def export_to_sqlite3(tables, output_dir, file_name):
 				exc_type, exc_value, exc_traceback  = sys.exc_info()
 				exc_value = "%s; %s" % (exc_value, sql.encode('utf8'))
 				raise exc_type, exc_value, exc_traceback
-			
+
+	return (sql_file, db_file)
+
 def _convert_to_sqls(tables):
 	sqls = []
 	
