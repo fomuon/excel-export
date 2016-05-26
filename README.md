@@ -26,3 +26,6 @@ $ excel-export -I sample_excel.xlsx
 	* $column_name:@TYPE
 	* @TYPE : I - Integer, T - Text, N - Numeric
 * 3행 또는 4행부터는 데이터행이며 셀병합된 열의 값은 모두 같은 값으로 처리된다.
+* 작성예제
+
+  ![example](https://github.com/fomuon/excel-export/blob/master/screenshot.jpg)
