@@ -11,7 +11,6 @@ except IOError:
 setup(
 	name="excel-export",
 	version='0.1.0',
-	py_modules=['flask_boto_sqs'],
 	author='Lee,Yongkyu',
 	author_email='fomuon@gmail.com',
 	url='https://github.com/fomuon/excel-export',
