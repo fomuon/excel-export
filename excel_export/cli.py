@@ -18,12 +18,14 @@ def main(argv):
 	
 	args = parser.parse_args()
 	
-	tables = extract.extract_tables_from_excels(excel_files=args.input_files)
-	output_files = export.export_to_sqlite3(tables, args.output_dir, "data")
+	for excel_file in args.input_files:
+		tables = extract.extract_tables_from_excel(excel_file)
+		file_name, file_ext = os.path.splitext(os.path.basename(excel_file))  # @UnusedVariable
+		output_files = export.export_to_sqlite3(tables, args.output_dir, file_name)
 	
-	print "=============Export files================"
-	for file_path in output_files:
-		print file_path
+		print excel_file, "===>"
+		for file_path in output_files:
+			print "\t", file_path
 	
 	pass
 

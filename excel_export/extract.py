@@ -1,17 +1,16 @@
 # encoding: utf-8
 import xlrd
 
-def extract_tables_from_excels(excel_files):
+def extract_tables_from_excel(excel_file):
 	tables_in_all_sheet = {}
 	
-	for excel_file in excel_files:
-		workbook = xlrd.open_workbook(excel_file)
-		
-		for sheet in workbook.sheets():
-			if sheet.ncols > 0:
-				tables_in_sheet = _get_tables_in_sheet(sheet)
-				tables_in_all_sheet.update(tables_in_sheet)
-				print len(tables_in_sheet), "tables extracted in sheet(", sheet.name.encode('utf8'), ")"
+	workbook = xlrd.open_workbook(excel_file)
+	
+	for sheet in workbook.sheets():
+		if sheet.ncols > 0:
+			tables_in_sheet = _get_tables_in_sheet(sheet)
+			tables_in_all_sheet.update(tables_in_sheet)
+			print len(tables_in_sheet), "tables extracted in sheet(", sheet.name.encode('utf8'), ")"
 		
 	return tables_in_all_sheet;
 
