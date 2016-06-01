@@ -52,15 +52,15 @@ def _convert_values(col_infos, row):
 	
 	for i in xrange(len(col_infos)):
 		val = None
-		if row[i]:
+		if row[i] == None:
+			val = 'null'
+		else:
 			if col_infos[i][1] == 'I':
 				val = str(int(row[i]))
 			elif col_infos[i][1] == 'T':
 				val = "'%s'" % row[i]
 			else:
 				val = str(row[i])
-		else:
-			val = 'null'
 			
 		values.append(val)
 		

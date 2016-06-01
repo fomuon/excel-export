@@ -96,15 +96,21 @@ def _get_table(sheet, header_info, merged_single_col_ranges):
 			else:
 				val = sheet.cell(data_row_pos, col[2]).value
 			
-			row.append(val)
+			row.append(None if val == '' else val)
 		
-		if not any(row):
+		if _check_all_none(row):
 			break
 		
 		data_rows.append(tuple(row))
 		data_row_pos += 1
 	
 	return (cols, data_rows)
+
+def _check_all_none(itarable):
+	for elem in itarable:
+		if elem != None:
+			return False
+	return True
 
 def _check_merged_cell(merged_single_col_ranges, row, col):
 	"""
