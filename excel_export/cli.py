@@ -4,6 +4,7 @@ import sys
 import argparse
 import os
 import extract, export
+from excel_export import __version__
 
 def main(argv):
 	parser = argparse.ArgumentParser('excel-extract_tables', 'Extract Sql (mysql or sqlite) from specifically formatted excel file')
@@ -18,14 +19,22 @@ def main(argv):
 	
 	args = parser.parse_args()
 	
-	for excel_file in args.input_files:
-		tables = extract.extract_tables_from_excel(excel_file)
-		file_name, file_ext = os.path.splitext(os.path.basename(excel_file))  # @UnusedVariable
-		output_files = export.export_to_sqlite3(tables, args.output_dir, file_name)
+	if args.version:
+		print('excel-export version {}'.format(__version__))
+		exit(0)
 	
-		print excel_file, "===>"
-		for file_path in output_files:
-			print "\t", file_path
+	if args.input_files:
+		for excel_file in args.input_files:
+			tables = extract.extract_tables_from_excel(excel_file)
+			file_name, file_ext = os.path.splitext(os.path.basename(excel_file))  # @UnusedVariable
+			output_files = export.export_to_sqlite3(tables, args.output_dir, file_name)
+		
+			print excel_file, "===>"
+			for file_path in output_files:
+				print "\t", file_path
+		print "Done!"
+	else:
+		parser.print_help()
 	
 	pass
 
