@@ -1,4 +1,4 @@
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 
 import sqlite3
 import os
@@ -7,18 +7,15 @@ import sys
 
 type_map = {'T': 'TEXT', 'I': 'INTEGER', 'N': 'NUMERIC'}
 
-def export_to_sqlite3(tables, output_dir, file_name):
-	sqls = _convert_to_sqls(tables)
-	
-	sql_file = os.path.join(output_dir, file_name + '.sql')
-	db_file = os.path.join(output_dir, file_name + '.sqlite3')
-	
+def export_to_sqlfile(sqls, sql_file):
 	with codecs.open(sql_file, "w", 'utf-8') as file_fd:
 		for sql in sqls:
 			file_fd.write(sql + "\n")
 	
+def export_to_sqlite3(sqls, db_file):
 	if os.path.exists(db_file):
 		os.remove(db_file)
+		
 	with sqlite3.connect(db_file) as con:
 		for sql in sqls:
 			try:
@@ -29,9 +26,7 @@ def export_to_sqlite3(tables, output_dir, file_name):
 				exc_value = "%s; %s" % (exc_value, sql.encode('utf8'))
 				raise exc_type, exc_value, exc_traceback
 
-	return (sql_file, db_file)
-
-def _convert_to_sqls(tables):
+def convert_to_sqls(tables):
 	sqls = []
 	
 	for table_name, val in tables.items():

@@ -1,4 +1,4 @@
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 import xlrd
 
 def extract_tables_from_excel(excel_file):
