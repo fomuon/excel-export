@@ -33,8 +33,12 @@ def convert_to_sqls(tables):
 		columns = []
 		for col_info in val[0]:
 			columns.append("`%s` %s" % (col_info[0], type_map[col_info[1]]))
+			
+		pks = [ "`%s`" % x[0] for x in val[0] if x[3] ]
+		if pks:
+			columns.append('PRIMARY KEY (%s)' % ", ".join(pks))
 		
-		sqls.append("CREATE TABLE `%s` (%s);" % (table_name, ",".join(columns)))
+		sqls.append("CREATE TABLE `%s` (%s);" % (table_name, ", ".join(columns)))
 		
 		for row in val[1]:
 			values = _convert_values(val[0], row)

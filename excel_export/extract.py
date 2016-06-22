@@ -66,7 +66,7 @@ def _get_table(sheet, header_info, merged_single_col_ranges):
 	"""
 	header_info를 바탕으로 sheet로부터 테이블 데이터(헤더정보포함) 추출한다
 	"""
-	cols = []
+	cols = [] # list of tuple (column name, data type, col_idx, pk)
 	data_row_pos = 0
 	for col_idx in xrange(header_info[1], header_info[2] + 1):
 		col1 = sheet.cell(1, col_idx).value
@@ -82,7 +82,9 @@ def _get_table(sheet, header_info, merged_single_col_ranges):
 			if data_row_pos == 0: data_row_pos = 3
 		
 		if arr_col:
-			cols.append((arr_col[0].strip(), arr_col[1].strip(), col_idx))
+			pk = True if len(arr_col) == 3 and arr_col[2] == 'PK' else False
+			cols.append((arr_col[0].strip(), arr_col[1].strip(), col_idx, pk))
+		
 	
 	data_rows = []
 	
