@@ -7,10 +7,11 @@ import extract, export
 from excel_export import __version__
 
 def main(argv):
-	parser = argparse.ArgumentParser('excel-extract_tables', 'Extract sql or db(sqlite) from specifically formatted excel file')
+	parser = argparse.ArgumentParser('excel-extract_tables', 'Export sql(sqlite, mysql) or db(sqlite) from specifically formatted excel file')
 	
 	parser.add_argument('-I', '--input-files', nargs='+', type=str, help='excel file path to extract sql. -I file1.xlsx file2.xlsx')
 	parser.add_argument('-O', '--output-dir', default=os.getcwd(), help='output directory. default current directory')
+	parser.add_argument('--with-mysql', default=False, action='store_true', help='create sql file for mysql')
 	parser.add_argument('--with-db-file', default=False, action='store_true', help='create sqlite db file')
 	parser.add_argument('--version', default=False, action='store_true', help='Print the current version')
 	
@@ -40,7 +41,13 @@ def main(argv):
 				db_file = os.path.join(args.output_dir, file_name + ".db")
 				export.export_to_sqlite3(sqls, db_file)
 				print "\t", db_file
-		
+			
+			if args.with_mysql:
+				sql_file = os.path.join(args.output_dir, file_name + "_mysql.sql")
+				sqls = export.convert_to_sqls(tables, 'mysql')
+				export.export_to_sqlfile(sqls, sql_file)
+				print "\t", sql_file
+				
 		print "Done!"
 	else:
 		parser.print_help()

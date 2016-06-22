@@ -99,7 +99,7 @@ def _get_table(sheet, header_info, merged_single_col_ranges):
 				val = sheet.cell(data_row_pos, col[2]).value
 			
 			row.append(None if val == '' else val)
-		
+			
 		if _check_all_none(row):
 			break
 		
