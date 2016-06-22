@@ -27,7 +27,7 @@ def export_to_sqlite3(sqls, db_file):
 def convert_to_sqls(tables, db_type='sqlite', drop_if_exists=True):
 	type_maps = { 
 		'sqlite' : {'T': 'TEXT', 'I': 'INTEGER', 'N': 'NUMERIC'},
-		'mysql' : {'T': 'VARCHAR', 'I': 'INT', 'N': 'DECIMAL(10,5)'}
+		'mysql' : {'T': 'VARCHAR', 'I': 'INT', 'N': 'DECIMAL'}
 	}
 	
 	type_map = type_maps[db_type]
@@ -35,15 +35,18 @@ def convert_to_sqls(tables, db_type='sqlite', drop_if_exists=True):
 	
 	for table_name, val in tables.items():
 		columns = []
-		pks = [ x[0] for x in val[0] if x[3] ]
 		
 		for col_info in val[0]:
-			col_type = type_map[col_info[1]]
-			if db_type == 'mysql' and col_type == 'VARCHAR':
-				col_type = "VARCHAR(%d)" % (100 if col_info[0] in pks else 10000)
+			col_type = type_map[col_info[1][0]]
+			if db_type == 'mysql':
+				if col_type == 'VARCHAR':
+					col_type = "VARCHAR(%d)" % col_info[1][1]
+				elif col_type == 'DECIMAL':
+					col_type = "DECIMAL(%d,%d)" % (col_info[1][1] + 3, col_info[1][1])
 				
 			columns.append("`%s` %s" % (col_info[0], col_type))
 			
+		pks = [ x[0] for x in val[0] if x[3] ]
 		if pks:
 			columns.append('PRIMARY KEY (%s)' % ", ".join('`' + x + '`' for x in pks))
 		
@@ -66,9 +69,9 @@ def _convert_values(col_infos, row):
 		if row[i] == None:
 			val = 'null'
 		else:
-			if col_infos[i][1] == 'I':
+			if col_infos[i][1][0] == 'I':
 				val = str(int(row[i]))
-			elif col_infos[i][1] == 'T':
+			elif col_infos[i][1][0] == 'T':
 				val = "'%s'" % row[i]
 			else:
 				val = str(row[i])

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import xlrd
 
+
 def extract_tables_from_excel(excel_file):
 	tables_in_all_sheet = {}
 	
@@ -66,7 +67,7 @@ def _get_table(sheet, header_info, merged_single_col_ranges):
 	"""
 	header_info를 바탕으로 sheet로부터 테이블 데이터(헤더정보포함) 추출한다
 	"""
-	cols = [] # list of tuple (column name, data type, col_idx, pk)
+	cols = [] 
 	data_row_pos = 0
 	for col_idx in xrange(header_info[1], header_info[2] + 1):
 		col1 = sheet.cell(1, col_idx).value
@@ -83,8 +84,7 @@ def _get_table(sheet, header_info, merged_single_col_ranges):
 		
 		if arr_col:
 			pk = True if len(arr_col) == 3 and arr_col[2] == 'PK' else False
-			cols.append((arr_col[0].strip(), arr_col[1].strip(), col_idx, pk))
-		
+			cols.append([arr_col[0].strip(), arr_col[1].strip(), col_idx, pk, 0])
 	
 	data_rows = []
 	
@@ -98,6 +98,14 @@ def _get_table(sheet, header_info, merged_single_col_ranges):
 			else:
 				val = sheet.cell(data_row_pos, col[2]).value
 			
+			if col[1] == 'T': #문자열 타입이면 항목중 가장 긴 문자열의 길이를 구함.
+				val_size = len(val) if type(val) == unicode else len(str(val))
+				col[4] = val_size if val_size > col[4] else col[4]
+			elif col[1] == 'N': #소수표현이라면 소수점 이하 길이를 구함.
+				str_val = str(val).strip()
+				fraction_len = len(str_val[str_val.find('.')+1:]) if str_val.find('.') >= 0 else 0
+				col[4] = fraction_len if fraction_len > col[4] else col[4]
+				
 			row.append(None if val == '' else val)
 			
 		if _check_all_none(row):
@@ -106,7 +114,13 @@ def _get_table(sheet, header_info, merged_single_col_ranges):
 		data_rows.append(tuple(row))
 		data_row_pos += 1
 	
-	return (cols, data_rows)
+	col_infos = [] # list of tuple (column name, data type, col_idx, pk)
+	
+	for col in cols:
+		col[1] = (col[1], col[4]) if col[1] == 'T' or col[1] == 'N' else (col[1],)
+		col_infos.append(tuple(col[:-1]))
+	
+	return (col_infos, data_rows)
 
 def _check_all_none(itarable):
 	for elem in itarable:
