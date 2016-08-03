@@ -3,3 +3,5 @@
 /.pydevproject
 /**/*.pyc
 /~$sample_excel.xlsx
+/dist/
+/excel_export.egg-info/
