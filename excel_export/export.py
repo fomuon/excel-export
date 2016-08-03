@@ -33,7 +33,8 @@ def convert_to_sqls(tables, db_type='sqlite', drop_if_exists=True):
 	type_map = type_maps[db_type]
 	sqls = []
 	
-	for table_name, val in tables.items():
+	for table_name in sorted(tables):
+		val = tables[table_name]
 		columns = []
 		
 		for col_info in val[0]:
