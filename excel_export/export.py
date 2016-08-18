@@ -26,8 +26,8 @@ def export_to_sqlite3(sqls, db_file):
 
 def convert_to_sqls(tables, db_type='sqlite', drop_if_exists=True):
 	type_maps = { 
-		'sqlite' : {'T': 'TEXT', 'I': 'INTEGER', 'N': 'NUMERIC'},
-		'mysql' : {'T': 'VARCHAR', 'I': 'INT', 'N': 'DECIMAL'}
+		'sqlite' : {'T': 'TEXT', 'I': 'INTEGER', 'N': 'NUMERIC', 'D': 'REAL'},
+		'mysql' : {'T': 'VARCHAR', 'I': 'INT', 'N': 'DECIMAL', 'D': 'DATETIME'}
 	}
 	
 	type_map = type_maps[db_type]
@@ -72,7 +72,7 @@ def _convert_values(col_infos, row):
 		else:
 			if col_infos[i][1][0] == 'I':
 				val = str(int(row[i]))
-			elif col_infos[i][1][0] == 'T':
+			elif col_infos[i][1][0] == 'T' or col_infos[i][1][0] == 'D':
 				val = "'%s'" % row[i]
 			else:
 				val = str(row[i])

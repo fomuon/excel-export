@@ -24,7 +24,7 @@ $ excel-export -I sample_excel.xlsx
 	* EXP:$table_name:$설명
 * 2행에는 컬럼 정보 작성 또는 컬럼 설명을 작성한다. 컬럼 설명을 작성하였다면 3행에 컬럼 정보를 작성한다.
 	* $column_name:@TYPE:PK(optional)
-	* @TYPE : I - Integer, T - Text, N - Numeric
+	* @TYPE : I - Integer, T - Text, N - Numeric, D - DateTime
 	* PK : Primary Key로 설정할 컬럼
 * 3행 또는 4행부터는 데이터행이며 셀병합된 열의 값은 모두 같은 값으로 처리된다.
 * 작성예제
