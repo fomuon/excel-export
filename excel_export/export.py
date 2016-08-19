@@ -24,6 +24,19 @@ def export_to_sqlite3(sqls, db_file):
 				exc_value = "%s; %s" % (exc_value, sql.encode('utf8'))
 				raise exc_type, exc_value, exc_traceback
 
+def convert_to_sqls_for_sqlite(tables, **kwargs):
+	filter_info = kwargs.get("filter_info", None)
+	with_db_file = kwargs.get("with_db_file", None)
+	
+	pass
+
+def convert_to_sqls_for_mysql(tables, **kwargs):
+	filter_info = kwargs.get("filter_info", None)
+	add_ddl = kwargs.get("add_ddl", False)
+	add_truncate_table = kwargs.get("add_truncate_table", False)
+
+	pass
+
 def convert_to_sqls(tables, db_type='sqlite', drop_if_exists=True):
 	type_maps = { 
 		'sqlite' : {'T': 'TEXT', 'I': 'INTEGER', 'N': 'NUMERIC', 'D': 'REAL'},
