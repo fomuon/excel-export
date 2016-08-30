@@ -13,9 +13,9 @@ $pip install git+https://github.com/fomuon/excel-export.git
 
 ## Command-Line 사용법
 
-sample_excel.xlsx에 정의된 sample_table, sample_table2, sample_table3 테이블에 대해 sqlite3 db 파일과 sql text 파일을 출력한다.
+sample_excel.xlsx에 정의된 sample_table, sample_table2, sample_table3 테이블을 query script 로 출력한다.
 ```
-$ excel-export -I sample_excel.xlsx
+$ excel-export -I sample_excel.xlsx --sqlite-output script.sql --mysql-output script2.sql
 ```
 
 ## 워크시트내 작성 규칙
