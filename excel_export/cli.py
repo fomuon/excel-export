@@ -53,7 +53,7 @@ def main(argv):
 		
 		if args.mysql_output:
 			exclude_info = parse_exclude_info(args.mysql_exclude) if args.mysql_exclude else None
-			sqls = export.convert_to_sqls_for_mysql(all_tables, exclude_info=exclude_info, add_create_table=args.sqlite_add_create_table, add_truncate=args.mysql_add_truncate)
+			sqls = export.convert_to_sqls_for_mysql(all_tables, exclude_info=exclude_info, add_create_table=args.mysql_add_create_table, add_truncate=args.mysql_add_truncate)
 			
 			export.export_to_sqlfile(sqls, args.mysql_output)
 			

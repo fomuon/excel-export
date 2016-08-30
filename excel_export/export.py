@@ -32,12 +32,12 @@ def convert_to_sqls_for_sqlite(tables, **kwargs):
 	sqls = []
 	
 	for table_name in sorted(tables):
-		if exclude_info[0] and table_name in exclude_info[0]:
+		if exclude_info and table_name in exclude_info[0]:
 			continue
 		
 		val = tables[table_name]
 		
-		if exclude_info[1] and exclude_info[1].has_key(table_name):
+		if exclude_info and exclude_info[1].has_key(table_name):
 			val = _filter_columns(val, exclude_info[1][table_name])
 		
 		if len(val[0]) > 0:
@@ -73,9 +73,12 @@ def convert_to_sqls_for_mysql(tables, **kwargs):
 	sqls = []
 
 	for table_name in sorted(tables):
+		if exclude_info and table_name in exclude_info[0]:
+			continue
+		
 		val = tables[table_name]
 		
-		if exclude_info[1] and exclude_info[1].has_key(table_name):
+		if exclude_info and exclude_info[1].has_key(table_name):
 			val = _filter_columns(val, exclude_info[1][table_name])
 		
 		if len(val[0]) > 0:
