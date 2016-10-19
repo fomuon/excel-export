@@ -40,16 +40,18 @@ def convert_to_sqls_for_sqlite(tables, **kwargs):
 		if exclude_info and exclude_info[1].has_key(table_name):
 			val = _filter_columns(val, exclude_info[1][table_name])
 		
-		if len(val[0]) > 0:
+		col_infos, values = val
+		
+		if len(col_infos) > 0:
 			create_cols = []
 			insert_cols = []
 			
-			for col_info in val[0]:
+			for col_info in col_infos:
 				col_type = type_map[col_info[1][0]]
 				create_cols.append("`%s` %s" % (col_info[0], col_type))
 				insert_cols.append("`%s`" % col_info[0])
 				
-			pks = [ x[0] for x in val[0] if x[3] ]
+			pks = [ x[0] for x in col_infos if x[3] ]
 			if pks:
 				create_cols.append('PRIMARY KEY (%s)' % ", ".join('`' + x + '`' for x in pks))
 			
@@ -57,9 +59,9 @@ def convert_to_sqls_for_sqlite(tables, **kwargs):
 				sqls.append("DROP TABLE IF EXISTS `%s`;" % table_name)
 				sqls.append("CREATE TABLE `%s` (%s);" % (table_name, ",".join(create_cols)))
 			
-			for row in val[1]:
-				values = _convert_values(val[0], row)
-				sqls.append("INSERT INTO `%s`(%s) VALUES (%s);" % (table_name, ",".join(insert_cols), ",".join(values)))
+			for row in values:
+				row_val = _convert_values(col_infos, row)
+				sqls.append("INSERT INTO `%s`(%s) VALUES (%s);" % (table_name, ",".join(insert_cols), ",".join(row_val)))
 	
 	return sqls
 	
@@ -68,6 +70,7 @@ def convert_to_sqls_for_mysql(tables, **kwargs):
 	exclude_info = kwargs.get("exclude_info", None)
 	add_create_table = kwargs.get("add_create_table", False)
 	add_truncate = kwargs.get("add_truncate", False)
+	extended_insert = kwargs.get("extended_insert", False)
 
 	type_map = {'T': 'VARCHAR', 'I': 'INT', 'N': 'DECIMAL', 'D': 'DATETIME'}
 	sqls = []
@@ -81,11 +84,13 @@ def convert_to_sqls_for_mysql(tables, **kwargs):
 		if exclude_info and exclude_info[1].has_key(table_name):
 			val = _filter_columns(val, exclude_info[1][table_name])
 		
-		if len(val[0]) > 0:
+		col_infos, values = val
+		
+		if len(col_infos) > 0:
 			create_cols = []
 			insert_cols = []
 			
-			for col_info in val[0]:
+			for col_info in col_infos:
 				col_type = type_map[col_info[1][0]]
 				
 				if col_type == 'VARCHAR':
@@ -96,7 +101,7 @@ def convert_to_sqls_for_mysql(tables, **kwargs):
 				create_cols.append("`%s` %s" % (col_info[0], col_type))
 				insert_cols.append("`%s`" % col_info[0])
 				
-			pks = [ x[0] for x in val[0] if x[3] ]
+			pks = [ x[0] for x in col_infos if x[3] ]
 			if pks:
 				create_cols.append('PRIMARY KEY (%s)' % ", ".join('`' + x + '`' for x in pks))
 			
@@ -106,9 +111,16 @@ def convert_to_sqls_for_mysql(tables, **kwargs):
 			elif add_truncate:
 				sqls.append("TRUNCATE `%s`;" % table_name)
 			
-			for row in val[1]:
-				values = _convert_values(val[0], row)
-				sqls.append("INSERT INTO `%s`(%s) VALUES (%s);" % (table_name, ",".join(insert_cols), ",".join(values)))
+			if extended_insert:
+				for row in values:
+					row_val = _convert_values(col_infos, row)
+					sqls.append("INSERT INTO `%s`(%s) VALUES (%s);" % (table_name, ",".join(insert_cols), ",".join(row_val)))
+			else:
+				sql_row_vals = []
+				for row in values:
+					sql_row_vals.append("(%s)" % ",".join(_convert_values(col_infos, row)))
+				
+				sqls.append("INSERT INTO `%s`(%s) VALUES \n%s;" % (table_name, ",".join(insert_cols), ",\n".join(sql_row_vals)))
 	
 	return sqls
 
