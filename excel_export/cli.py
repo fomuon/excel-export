@@ -20,6 +20,7 @@ def main(argv):
 	group_mysql.add_argument('--mysql-output', default=None, type=str, help='Output FILE NAME for mysql script.')
 	group_mysql.add_argument('--mysql-add-create-table', default=False, action='store_true', help='Add DROP and CREATE TABLE statement in script file.')
 	group_mysql.add_argument('--mysql-add-truncate', default=False, action='store_true', help='Add TRUNCATE TABLE statement in script file.')
+	group_mysql.add_argument('--mysql-extended-insert', default=False, action='store_true', help='Write INSERT statements using multiple-row syntax that includes several VALUES lists')
 	group_mysql.add_argument('--mysql-exclude', default=None, type=str, help='Add excluding tables and columns. --sqlite-exclude "table1,table2(col1,col2)"')
 	
 	parser.add_argument('--version', default=False, action='store_true', help='Print the current version')
@@ -53,7 +54,7 @@ def main(argv):
 		
 		if args.mysql_output:
 			exclude_info = parse_exclude_info(args.mysql_exclude) if args.mysql_exclude else None
-			sqls = export.convert_to_sqls_for_mysql(all_tables, exclude_info=exclude_info, add_create_table=args.mysql_add_create_table, add_truncate=args.mysql_add_truncate)
+			sqls = export.convert_to_sqls_for_mysql(all_tables, exclude_info=exclude_info, add_create_table=args.mysql_add_create_table, add_truncate=args.mysql_add_truncate, extended_insert=args.mysql_extended_insert)
 			
 			export.export_to_sqlfile(sqls, args.mysql_output)
 			
