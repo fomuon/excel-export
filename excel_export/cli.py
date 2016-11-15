@@ -14,14 +14,16 @@ def main(argv):
 	group_sqlite.add_argument('--sqlite-output', default=None, type=str, help='Output FILE NAME for sqlite script.')
 	group_sqlite.add_argument('--sqlite-add-create-table', default=False, action='store_true', help='Add DROP and CREATE TABLE statement in script file.')
 	group_sqlite.add_argument('--sqlite-with-db-file', default=False, action='store_true', help='Enable Exporting DB file.')
-	group_sqlite.add_argument('--sqlite-exclude', default=None, type=str, help='Add excluding tables and columns. --sqlite-exclude "table1,table2(col1,col2)"')
+	group_sqlite.add_argument('--sqlite-includeonly', default=None, type=str, help='tables and columns to only include exporting file. --sqlite-includeonly "table1,table2(col1,col2)"')
+	group_sqlite.add_argument('--sqlite-exclude', default=None, type=str, help='tables and columns to exclude exporting file. --sqlite-exclude "table1,table2(col1,col2)"')
 	
 	group_mysql = parser.add_argument_group('[For MySql]', 'Options for mysql exporting.')
 	group_mysql.add_argument('--mysql-output', default=None, type=str, help='Output FILE NAME for mysql script.')
 	group_mysql.add_argument('--mysql-add-create-table', default=False, action='store_true', help='Add DROP and CREATE TABLE statement in script file.')
 	group_mysql.add_argument('--mysql-add-truncate', default=False, action='store_true', help='Add TRUNCATE TABLE statement in script file.')
 	group_mysql.add_argument('--mysql-extended-insert', default=False, action='store_true', help='Write INSERT statements using multiple-row syntax that includes several VALUES lists')
-	group_mysql.add_argument('--mysql-exclude', default=None, type=str, help='Add excluding tables and columns. --sqlite-exclude "table1,table2(col1,col2)"')
+	group_mysql.add_argument('--mysql-includeonly', default=None, type=str, help='tables and columns to only include exporting file. --mysql-includeonly "table1,table2(col1,col2)"')
+	group_mysql.add_argument('--mysql-exclude', default=None, type=str, help='tables and columns to exclude exporting file. --sqlite-exclude "table1,table2(col1,col2)"')
 	
 	parser.add_argument('--version', default=False, action='store_true', help='Print the current version')
 	
@@ -42,8 +44,9 @@ def main(argv):
 			all_tables.update(tables)
 		
 		if args.sqlite_output:
-			exclude_info = parse_exclude_info(args.sqlite_exclude) if args.sqlite_exclude else None
-			sqls = export.convert_to_sqls_for_sqlite(all_tables, exclude_info=exclude_info, add_create_table=args.sqlite_add_create_table)
+			includeonly_info = parse_filter_info(args.sqlite_includeonly) if args.sqlite_includeonly else None
+			exclude_info = parse_filter_info(args.sqlite_exclude) if args.sqlite_exclude else None
+			sqls = export.convert_to_sqls_for_sqlite(all_tables, exclude_info=exclude_info, includeonly_info=includeonly_info, add_create_table=args.sqlite_add_create_table)
 			
 			export.export_to_sqlfile(sqls, args.sqlite_output)
 			
@@ -53,8 +56,9 @@ def main(argv):
 			pass
 		
 		if args.mysql_output:
-			exclude_info = parse_exclude_info(args.mysql_exclude) if args.mysql_exclude else None
-			sqls = export.convert_to_sqls_for_mysql(all_tables, exclude_info=exclude_info, add_create_table=args.mysql_add_create_table, add_truncate=args.mysql_add_truncate, extended_insert=args.mysql_extended_insert)
+			includeonly_info = parse_filter_info(args.mysql_includeonly) if args.mysql_includeonly else None
+			exclude_info = parse_filter_info(args.mysql_exclude) if args.mysql_exclude else None
+			sqls = export.convert_to_sqls_for_mysql(all_tables, exclude_info=exclude_info, includeonly_info=includeonly_info, add_create_table=args.mysql_add_create_table, add_truncate=args.mysql_add_truncate, extended_insert=args.mysql_extended_insert)
 			
 			export.export_to_sqlfile(sqls, args.mysql_output)
 			
@@ -67,24 +71,24 @@ def main(argv):
 
 #추출시 제외할 정보 파서
 #return (제외한 테이블, 제외할 컬럼) ( set(except_table), { table : set(except_cols) } )
-def parse_exclude_info(exclude_arg):
-	exclude_tables = set([])
-	exclude_cols = {}
+def parse_filter_info(filter_info):
+	filter_tables = set([])
+	filter_cols = {}
 	
 	last_elem = []
 	in_bracket_tab = None
 	
-	for ch in exclude_arg:
+	for ch in filter_info:
 		if ch == '(':
 			in_bracket_tab = ''.join(last_elem).strip()
 			if in_bracket_tab:
-				exclude_cols[in_bracket_tab] = set([])
+				filter_cols[in_bracket_tab] = set([])
 			last_elem = []
 		elif ch == ')':
 			if in_bracket_tab:
 				v = ''.join(last_elem).strip()
 				if v:
-					exclude_cols[in_bracket_tab].add(v)
+					filter_cols[in_bracket_tab].add(v)
 				
 			last_elem = []
 			in_bracket_tab = None
@@ -92,9 +96,9 @@ def parse_exclude_info(exclude_arg):
 			v = ''.join(last_elem).strip()
 			if v:
 				if in_bracket_tab:
-					exclude_cols[in_bracket_tab].add(v)
+					filter_cols[in_bracket_tab].add(v)
 				else:
-					exclude_tables.add(v)
+					filter_tables.add(v)
 				
 			last_elem = []
 		else:
@@ -102,10 +106,10 @@ def parse_exclude_info(exclude_arg):
 	
 	v = ''.join(last_elem).strip()
 	if v:
-		exclude_tables.add(v)
+		filter_tables.add(v)
 	
 	
-	return (exclude_tables, exclude_cols)
+	return (filter_tables, filter_cols)
 
 def entry_point():
 	main(sys.argv[1:])
