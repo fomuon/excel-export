@@ -25,6 +25,7 @@ def export_to_sqlite3(sqls, db_file):
 				raise exc_type, exc_value, exc_traceback
 
 def convert_to_sqls_for_sqlite(tables, **kwargs):
+	includeonly_info = kwargs.get("includeonly_info", None)
 	exclude_info = kwargs.get("exclude_info", None)
 	add_create_table = kwargs.get("add_create_table", False)
 	
@@ -32,13 +33,17 @@ def convert_to_sqls_for_sqlite(tables, **kwargs):
 	sqls = []
 	
 	for table_name in sorted(tables):
+		if includeonly_info and table_name not in includeonly_info[0] and table_name not in includeonly_info[1]:
+			continue
 		if exclude_info and table_name in exclude_info[0]:
 			continue
 		
 		val = tables[table_name]
 		
+		if includeonly_info and includeonly_info[1].has_key(table_name):
+			val = _includeonly_columns(val, includeonly_info[1][table_name])
 		if exclude_info and exclude_info[1].has_key(table_name):
-			val = _filter_columns(val, exclude_info[1][table_name])
+			val = _exclude_columns(val, exclude_info[1][table_name])
 		
 		col_infos, values = val
 		
@@ -67,6 +72,7 @@ def convert_to_sqls_for_sqlite(tables, **kwargs):
 	
 
 def convert_to_sqls_for_mysql(tables, **kwargs):
+	includeonly_info = kwargs.get("includeonly_info", None)
 	exclude_info = kwargs.get("exclude_info", None)
 	add_create_table = kwargs.get("add_create_table", False)
 	add_truncate = kwargs.get("add_truncate", False)
@@ -76,13 +82,17 @@ def convert_to_sqls_for_mysql(tables, **kwargs):
 	sqls = []
 
 	for table_name in sorted(tables):
+		if includeonly_info and table_name not in includeonly_info[0] and table_name not in includeonly_info[1]:
+			continue
 		if exclude_info and table_name in exclude_info[0]:
 			continue
 		
 		val = tables[table_name]
 		
+		if includeonly_info and includeonly_info[1].has_key(table_name):
+			val = _includeonly_columns(val, includeonly_info[1][table_name])
 		if exclude_info and exclude_info[1].has_key(table_name):
-			val = _filter_columns(val, exclude_info[1][table_name])
+			val = _exclude_columns(val, exclude_info[1][table_name])
 		
 		col_infos, values = val
 		
@@ -145,7 +155,27 @@ def _convert_values(col_infos, row):
 		
 	return values
 
-def _filter_columns(val, exclude_cols):
+def _includeonly_columns(val, includeonly_cols):
+	includeonly_indices = []
+	filtered_head = []
+	filtered_rows = []
+	
+	for idx, item in enumerate(val[0]):
+		if item[0] in includeonly_cols:
+			includeonly_indices.append(idx)
+			filtered_head.append(item)
+	
+	for row in val[1]:
+		filtered_row = []
+		for idx, v in enumerate(row):
+			if idx in includeonly_indices:
+				filtered_row.append(v)
+		
+		filtered_rows.append(tuple(filtered_row))
+	
+	return (filtered_head, filtered_rows)
+
+def _exclude_columns(val, exclude_cols):
 	exclude_indices = []
 	filtered_head = []
 	filtered_rows = []
