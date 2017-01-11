@@ -32,41 +32,47 @@ def convert_to_sqls_for_sqlite(tables, **kwargs):
 	type_map = {'T': 'TEXT', 'I': 'INTEGER', 'N': 'NUMERIC', 'D': 'REAL'}
 	sqls = []
 	
-	for table_name in sorted(tables):
-		if includeonly_info and table_name not in includeonly_info[0] and table_name not in includeonly_info[1]:
-			continue
-		if exclude_info and table_name in exclude_info[0]:
-			continue
-		
-		val = tables[table_name]
-		
-		if includeonly_info and includeonly_info[1].has_key(table_name):
-			val = _includeonly_columns(val, includeonly_info[1][table_name])
-		if exclude_info and exclude_info[1].has_key(table_name):
-			val = _exclude_columns(val, exclude_info[1][table_name])
-		
-		col_infos, values = val
-		
-		if len(col_infos) > 0:
-			create_cols = []
-			insert_cols = []
+	try:
+		for table_name in sorted(tables):
+			if includeonly_info and table_name not in includeonly_info[0] and table_name not in includeonly_info[1]:
+				continue
+			if exclude_info and table_name in exclude_info[0]:
+				continue
 			
-			for col_info in col_infos:
-				col_type = type_map[col_info[1][0]]
-				create_cols.append("`%s` %s" % (col_info[0], col_type))
-				insert_cols.append("`%s`" % col_info[0])
+			val = tables[table_name]
+			
+			if includeonly_info and includeonly_info[1].has_key(table_name):
+				val = _includeonly_columns(val, includeonly_info[1][table_name])
+			if exclude_info and exclude_info[1].has_key(table_name):
+				val = _exclude_columns(val, exclude_info[1][table_name])
+			
+			col_infos, values = val
+			
+			if len(col_infos) > 0:
+				create_cols = []
+				insert_cols = []
 				
-			pks = [ x[0] for x in col_infos if x[3] ]
-			if pks:
-				create_cols.append('PRIMARY KEY (%s)' % ", ".join('`' + x + '`' for x in pks))
-			
-			if add_create_table:
-				sqls.append("DROP TABLE IF EXISTS `%s`;" % table_name)
-				sqls.append("CREATE TABLE `%s` (%s);" % (table_name, ",".join(create_cols)))
-			
-			for row in values:
-				row_val = _convert_values(col_infos, row)
-				sqls.append("INSERT INTO `%s`(%s) VALUES (%s);" % (table_name, ",".join(insert_cols), ",".join(row_val)))
+				for col_info in col_infos:
+					col_type = type_map[col_info[1][0]]
+					create_cols.append("`%s` %s" % (col_info[0], col_type))
+					insert_cols.append("`%s`" % col_info[0])
+					
+				pks = [ x[0] for x in col_infos if x[3] ]
+				if pks:
+					create_cols.append('PRIMARY KEY (%s)' % ", ".join('`' + x + '`' for x in pks))
+				
+				if add_create_table:
+					sqls.append("DROP TABLE IF EXISTS `%s`;" % table_name)
+					sqls.append("CREATE TABLE `%s` (%s);" % (table_name, ",".join(create_cols)))
+				
+				for row in values:
+					row_val = _convert_values(col_infos, row)
+					sqls.append("INSERT INTO `%s`(%s) VALUES (%s);" % (table_name, ",".join(insert_cols), ",".join(row_val)))
+					
+	except:
+		exc_type, exc_value, exc_traceback  = sys.exc_info()
+		exc_value = "%s; error at '%s'" % (exc_value, table_name)
+		raise exc_type, exc_value, exc_traceback
 	
 	return sqls
 	
@@ -81,56 +87,61 @@ def convert_to_sqls_for_mysql(tables, **kwargs):
 	type_map = {'T': 'VARCHAR', 'I': 'INT', 'N': 'DECIMAL', 'D': 'DATETIME'}
 	sqls = []
 
-	for table_name in sorted(tables):
-		if includeonly_info and table_name not in includeonly_info[0] and table_name not in includeonly_info[1]:
-			continue
-		if exclude_info and table_name in exclude_info[0]:
-			continue
-		
-		val = tables[table_name]
-		
-		if includeonly_info and includeonly_info[1].has_key(table_name):
-			val = _includeonly_columns(val, includeonly_info[1][table_name])
-		if exclude_info and exclude_info[1].has_key(table_name):
-			val = _exclude_columns(val, exclude_info[1][table_name])
-		
-		col_infos, values = val
-		
-		if len(col_infos) > 0:
-			create_cols = []
-			insert_cols = []
+	try:
+		for table_name in sorted(tables):
+			if includeonly_info and table_name not in includeonly_info[0] and table_name not in includeonly_info[1]:
+				continue
+			if exclude_info and table_name in exclude_info[0]:
+				continue
 			
-			for col_info in col_infos:
-				col_type = type_map[col_info[1][0]]
+			val = tables[table_name]
+			
+			if includeonly_info and includeonly_info[1].has_key(table_name):
+				val = _includeonly_columns(val, includeonly_info[1][table_name])
+			if exclude_info and exclude_info[1].has_key(table_name):
+				val = _exclude_columns(val, exclude_info[1][table_name])
+			
+			col_infos, values = val
+			
+			if len(col_infos) > 0:
+				create_cols = []
+				insert_cols = []
 				
-				if col_type == 'VARCHAR':
-					col_type = "VARCHAR(%d)" % col_info[1][1]
-				elif col_type == 'DECIMAL':
-					col_type = "DECIMAL(%d,%d)" % (col_info[1][1] + 3, col_info[1][1])
+				for col_info in col_infos:
+					col_type = type_map[col_info[1][0]]
 					
-				create_cols.append("`%s` %s" % (col_info[0], col_type))
-				insert_cols.append("`%s`" % col_info[0])
+					if col_type == 'VARCHAR':
+						col_type = "VARCHAR(%d)" % col_info[1][1]
+					elif col_type == 'DECIMAL':
+						col_type = "DECIMAL(%d,%d)" % (col_info[1][1] + 3, col_info[1][1])
+						
+					create_cols.append("`%s` %s" % (col_info[0], col_type))
+					insert_cols.append("`%s`" % col_info[0])
+					
+				pks = [ x[0] for x in col_infos if x[3] ]
+				if pks:
+					create_cols.append('PRIMARY KEY (%s)' % ", ".join('`' + x + '`' for x in pks))
 				
-			pks = [ x[0] for x in col_infos if x[3] ]
-			if pks:
-				create_cols.append('PRIMARY KEY (%s)' % ", ".join('`' + x + '`' for x in pks))
-			
-			if add_create_table:
-				sqls.append("DROP TABLE IF EXISTS `%s`;" % table_name)
-				sqls.append("CREATE TABLE `%s` (%s);" % (table_name, ",".join(create_cols)))
-			elif add_truncate:
-				sqls.append("TRUNCATE `%s`;" % table_name)
-			
-			if extended_insert:
-				for row in values:
-					row_val = _convert_values(col_infos, row)
-					sqls.append("INSERT INTO `%s`(%s) VALUES (%s);" % (table_name, ",".join(insert_cols), ",".join(row_val)))
-			else:
-				sql_row_vals = []
-				for row in values:
-					sql_row_vals.append("(%s)" % ",".join(_convert_values(col_infos, row)))
+				if add_create_table:
+					sqls.append("DROP TABLE IF EXISTS `%s`;" % table_name)
+					sqls.append("CREATE TABLE `%s` (%s);" % (table_name, ",".join(create_cols)))
+				elif add_truncate:
+					sqls.append("TRUNCATE `%s`;" % table_name)
 				
-				sqls.append("INSERT INTO `%s`(%s) VALUES \n%s;" % (table_name, ",".join(insert_cols), ",\n".join(sql_row_vals)))
+				if extended_insert:
+					for row in values:
+						row_val = _convert_values(col_infos, row)
+						sqls.append("INSERT INTO `%s`(%s) VALUES (%s);" % (table_name, ",".join(insert_cols), ",".join(row_val)))
+				else:
+					sql_row_vals = []
+					for row in values:
+						sql_row_vals.append("(%s)" % ",".join(_convert_values(col_infos, row)))
+					
+					sqls.append("INSERT INTO `%s`(%s) VALUES \n%s;" % (table_name, ",".join(insert_cols), ",\n".join(sql_row_vals)))
+	except:
+		exc_type, exc_value, exc_traceback  = sys.exc_info()
+		exc_value = "%s; error at '%s'" % (exc_value, table_name)
+		raise exc_type, exc_value, exc_traceback
 	
 	return sqls
 

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import xlrd
+import sys
 
 
 def extract_tables_from_excel(excel_file):
@@ -67,58 +68,69 @@ def _get_table(sheet, header_info, merged_single_col_ranges):
 	"""
 	header_info를 바탕으로 sheet로부터 테이블 데이터(헤더정보포함) 추출한다
 	"""
-	cols = [] 
-	data_row_pos = 0
-	for col_idx in xrange(header_info[1], header_info[2] + 1):
-		col1 = sheet.cell(1, col_idx).value
-		col2 = sheet.cell(2, col_idx).value
-		
-		arr_col = None
-		
-		if ':' in col1:
-			arr_col = col1.split(':')
-			if data_row_pos == 0: data_row_pos = 2
-		elif ':' in col2:
-			arr_col = col2.split(':')
-			if data_row_pos == 0: data_row_pos = 3
-		
-		if arr_col:
-			pk = True if len(arr_col) == 3 and arr_col[2] == 'PK' else False
-			cols.append([arr_col[0].strip(), arr_col[1].strip(), col_idx, pk, 0])
-	
-	data_rows = []
-	
-	while data_row_pos < sheet.nrows:
-		row = []
-		for col in cols:
-			rng = _check_merged_cell(merged_single_col_ranges, data_row_pos, col[2])
+	try:
+		cols = []
+		data_row_pos = 0
+		for col_idx in xrange(header_info[1], header_info[2] + 1):
+			col1 = sheet.cell(1, col_idx).value
+			col2 = sheet.cell(2, col_idx).value
 			
-			if rng:
-				val = sheet.cell(rng[0], rng[2]).value
-			else:
-				val = sheet.cell(data_row_pos, col[2]).value
+			if isinstance(col1, basestring) == False:
+				col1 = str(col1)
+			if isinstance(col2, basestring) == False:
+				col2 = str(col2)
 			
-			if col[1] == 'T': #문자열 타입이면 항목중 가장 긴 문자열의 길이를 구함.
-				val_size = len(val) if type(val) == unicode else len(str(val))
-				col[4] = val_size if val_size > col[4] else col[4]
-			elif col[1] == 'N': #소수표현이라면 소수점 이하 길이를 구함.
-				str_val = str(val).strip()
-				fraction_len = len(str_val[str_val.find('.')+1:]) if str_val.find('.') >= 0 else 0
-				col[4] = fraction_len if fraction_len > col[4] else col[4]
+			arr_col = None
+			
+			if ':' in col1:
+				arr_col = col1.split(':')
+				if data_row_pos == 0: data_row_pos = 2
+			elif ':' in col2:
+				arr_col = col2.split(':')
+				if data_row_pos == 0: data_row_pos = 3
+			
+			if arr_col:
+				pk = True if len(arr_col) == 3 and arr_col[2] == 'PK' else False
+				cols.append([arr_col[0].strip(), arr_col[1].strip(), col_idx, pk, 0])
+		
+		data_rows = []
+		
+		while data_row_pos < sheet.nrows:
+			row = []
+			for col in cols:
+				rng = _check_merged_cell(merged_single_col_ranges, data_row_pos, col[2])
 				
-			row.append(None if val == '' else val)
+				if rng:
+					val = sheet.cell(rng[0], rng[2]).value
+				else:
+					val = sheet.cell(data_row_pos, col[2]).value
+				
+				if col[1] == 'T': #문자열 타입이면 항목중 가장 긴 문자열의 길이를 구함.
+					val_size = len(val) if type(val) == unicode else len(str(val))
+					col[4] = val_size if val_size > col[4] else col[4]
+				elif col[1] == 'N': #소수표현이라면 소수점 이하 길이를 구함.
+					str_val = str(val).strip()
+					fraction_len = len(str_val[str_val.find('.')+1:]) if str_val.find('.') >= 0 else 0
+					col[4] = fraction_len if fraction_len > col[4] else col[4]
+					
+				row.append(None if val == '' else val)
+				
+			if _check_all_none(row):
+				break
 			
-		if _check_all_none(row):
-			break
+			data_rows.append(tuple(row))
+			data_row_pos += 1
 		
-		data_rows.append(tuple(row))
-		data_row_pos += 1
-	
-	col_infos = [] # list of tuple (column name, data type, col_idx, pk)
-	
-	for col in cols:
-		col[1] = (col[1], col[4]) if col[1] == 'T' or col[1] == 'N' else (col[1],)
-		col_infos.append(tuple(col[:-1]))
+		col_infos = [] # list of tuple (column name, data type, col_idx, pk)
+		
+		for col in cols:
+			col[1] = (col[1], col[4]) if col[1] == 'T' or col[1] == 'N' else (col[1],)
+			col_infos.append(tuple(col[:-1]))
+		
+	except:
+		exc_type, exc_value, exc_traceback  = sys.exc_info()
+		exc_value = "%s; error at '%s'" % (exc_value, header_info[0])
+		raise exc_type, exc_value, exc_traceback
 	
 	return (col_infos, data_rows)
 
