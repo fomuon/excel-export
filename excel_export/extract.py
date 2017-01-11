@@ -69,11 +69,16 @@ def _get_table(sheet, header_info, merged_single_col_ranges):
 	header_info를 바탕으로 sheet로부터 테이블 데이터(헤더정보포함) 추출한다
 	"""
 	try:
-		cols = [] 
+		cols = []
 		data_row_pos = 0
 		for col_idx in xrange(header_info[1], header_info[2] + 1):
 			col1 = sheet.cell(1, col_idx).value
 			col2 = sheet.cell(2, col_idx).value
+			
+			if isinstance(col1, basestring) == False:
+				col1 = str(col1)
+			if isinstance(col2, basestring) == False:
+				col2 = str(col2)
 			
 			arr_col = None
 			
