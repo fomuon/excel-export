@@ -12,7 +12,7 @@ def extract_tables_from_excel(excel_file):
 		if sheet.ncols > 0:
 			tables_in_sheet = _get_tables_in_sheet(sheet)
 			tables_in_all_sheet.update(tables_in_sheet)
-			print len(tables_in_sheet), "tables extracted in sheet(", sheet.name.encode('utf8'), ")"
+			print len(tables_in_sheet), "tables extracted in sheet(", sheet.name, ")"
 		
 	return tables_in_all_sheet;
 
@@ -91,7 +91,7 @@ def _get_table(sheet, header_info, merged_single_col_ranges):
 			
 			if arr_col:
 				pk = True if len(arr_col) == 3 and arr_col[2] == 'PK' else False
-				cols.append([arr_col[0].strip(), arr_col[1].strip(), col_idx, pk, 0])
+				cols.append([arr_col[0].strip(), arr_col[1].strip(), col_idx, pk, 0, 0])
 		
 		data_rows = []
 		
@@ -110,8 +110,15 @@ def _get_table(sheet, header_info, merged_single_col_ranges):
 					col[4] = val_size if val_size > col[4] else col[4]
 				elif col[1] == 'N': #소수표현이라면 소수점 이하 길이를 구함.
 					str_val = str(val).strip()
-					fraction_len = len(str_val[str_val.find('.')+1:]) if str_val.find('.') >= 0 else 0
-					col[4] = fraction_len if fraction_len > col[4] else col[4]
+					if str_val.find('.') >= 0:
+						integer_portion_len = len(str_val[:str_val.find('.')])
+						decimal_portion_len = len(str_val[str_val.find('.')+1:])
+					else:
+						integer_portion_len = len(str_val)
+						decimal_portion_len = 0
+					
+					col[4] = integer_portion_len if integer_portion_len > col[4] else col[4]
+					col[5] = decimal_portion_len if decimal_portion_len > col[5] else col[5]
 					
 				row.append(None if val == '' else val)
 				
@@ -124,7 +131,13 @@ def _get_table(sheet, header_info, merged_single_col_ranges):
 		col_infos = [] # list of tuple (column name, data type, col_idx, pk)
 		
 		for col in cols:
-			col[1] = (col[1], col[4]) if col[1] == 'T' or col[1] == 'N' else (col[1],)
+			if col[1] == 'T':
+				col[1] = (col[1], col[4])
+			elif col[1] == 'N':
+				col[1] = (col[1], col[4], col[5])
+			else:
+				col[1] = (col[1],)
+			
 			col_infos.append(tuple(col[:-1]))
 		
 	except:

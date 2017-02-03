@@ -113,7 +113,7 @@ def convert_to_sqls_for_mysql(tables, **kwargs):
 					if col_type == 'VARCHAR':
 						col_type = "VARCHAR(%d)" % col_info[1][1]
 					elif col_type == 'DECIMAL':
-						col_type = "DECIMAL(%d,%d)" % (col_info[1][1] + 3, col_info[1][1])
+						col_type = "DECIMAL(%d,%d)" % (col_info[1][1] + col_info[1][2], col_info[1][2])
 						
 					create_cols.append("`%s` %s" % (col_info[0], col_type))
 					insert_cols.append("`%s`" % col_info[0])
@@ -151,19 +151,22 @@ def _convert_values(col_infos, row):
 	values = []
 	
 	for i in xrange(len(col_infos)):
-		val = None
-		if row[i] == None:
-			val = 'null'
-		else:
-			if col_infos[i][1][0] == 'I':
-				val = str(int(row[i]))
-			elif col_infos[i][1][0] == 'T' or col_infos[i][1][0] == 'D':
-				val = "'%s'" % row[i]
+		try:
+			val = None
+			if row[i] == None:
+				val = 'null'
 			else:
-				val = str(row[i])
-			
-		values.append(val)
-		
+				if col_infos[i][1][0] == 'T' or col_infos[i][1][0] == 'D':
+					val = "'%s'" % row[i]
+				else: # I or N
+					val = str(row[i])
+				
+			values.append(val)
+		except:
+			exc_type, exc_value, exc_traceback  = sys.exc_info()
+			exc_value = "%s; error at '%s'" % (exc_value, row[i])
+			raise exc_type, exc_value, exc_traceback
+	
 	return values
 
 def _includeonly_columns(val, includeonly_cols):
