@@ -12,7 +12,7 @@ def extract_tables_from_excel(excel_file):
 		if sheet.ncols > 0:
 			tables_in_sheet = _get_tables_in_sheet(sheet)
 			tables_in_all_sheet.update(tables_in_sheet)
-			print len(tables_in_sheet), "tables extracted in sheet(", sheet.name.encode('utf8'), ")"
+			print len(tables_in_sheet), "tables extracted in sheet(", sheet.name, ")"
 		
 	return tables_in_all_sheet;
 
